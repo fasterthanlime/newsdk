@@ -7,6 +7,9 @@
  */
 Iterable: interface <T> {
 
+    /**
+     * Call 'f' on every element of this iterable
+     */
     each: func (f: Func (T))
 
 }

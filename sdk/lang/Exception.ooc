@@ -65,12 +65,23 @@ include stdlib, stdio
 /** stlib.h - cause abnormal process termination */
 abort: extern func
 
-/** stdio.h */
-FStream: cover from Int
-stdout, stderr, stdin: extern FStream
+/** stdio.h - FILE* type */
+CFile: cover from FILE*
 
-fprintf: func (stream: FStream, fmt: Pointer, ...)
-fflush: func (stream: FStream)
+/** stdio.h - standard output stream */
+stdout: extern CFile
+
+/** stdio.h - standard error stream */
+stderr: extern CFile
+
+/** stdio.h - standard input stream */
+stdin : extern CFile
+
+/** stdio.h - formatted print on a given stream */
+fprintf: func (stream: CFile, fmt: Pointer, ...)
+
+/** stdio.h - flush a stream */
+fflush: func (stream: CFile)
 
 
 

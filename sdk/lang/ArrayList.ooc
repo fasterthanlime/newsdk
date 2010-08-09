@@ -11,9 +11,21 @@
  */
 ArrayList: class <T> implements Iterable<T> {
 
-	data : T*
-	capacity : Int
-	size : Int { get set }
+    /**
+     * Number of elements contained in that list
+     */
+    size : Int { get set }
+
+    /**
+     * Actual array used for storing elements
+     */
+	_data : T*
+
+    /**
+     * size of the internal array used for storage
+     * ie. number of elements we can add before resizing
+     */
+	_capacity : Int
 
     /**
      * Create a new empty ArrayList
@@ -23,20 +35,20 @@ ArrayList: class <T> implements Iterable<T> {
 	}
 
     /**
-     * Create a new ArrayList that can store up to 'capacity'
+     * Create a new ArrayList that can store up to '_capacity'
      * elements without being resized
      */
-	init: func ~withCapacity (=capacity) {
-		data = gc_malloc(capacity * T size)
+	init: func ~with_capacity (=_capacity) {
+		_data = gc_malloc(_capacity * T size)
 	}
 
     /**
      * Create a new ArrayList from an array, given its size
      */
-    init: func ~withData (.data, =size) {
-        this data = gc_malloc(size * T size)
-        memcpy(this data, data, size * T size)
-        capacity = size
+    init: func ~with_data (._data, =size) {
+        this _data = gc_malloc(size * T size)
+        memcpy(this _data, _data, size * T size)
+        _capacity = size
     }
 
     /**
@@ -53,7 +65,7 @@ ArrayList: class <T> implements Iterable<T> {
      */
 	add: func (element: T) {
 		_ensureCapacity(size + 1)
-		data[size] = element
+		_data[size] = element
 		size += 1
 	}
 
@@ -69,7 +81,7 @@ ArrayList: class <T> implements Iterable<T> {
      */
 	get: func(index: Int) -> T {
 		_checkIndex(index)
-		data[index]
+		_data[index]
 	}
 
 	/**
@@ -78,35 +90,35 @@ ArrayList: class <T> implements Iterable<T> {
 	 */
 	set: func(index: Int, element: T) -> T {
         _checkIndex(index)
-        old := data[index]
-		data[index] = element
+        old := _data[index]
+		_data[index] = element
         old
 	}
 	/**
-	 * Increases the capacity of this ArrayList instance, if necessary,
+	 * Increases the _capacity of this ArrayList instance, if necessary,
 	 * to ensure that it can hold at least the number of elements
-	 * specified by the minimum capacity argument.
+	 * specified by the minimum _capacity argument.
 	 */
-	_ensureCapacity: inline func (newSize: Int) {
-		if(newSize > capacity) {
-			capacity = newSize * (newSize > 50000 ? 2 : 4)
-            tmpData := gc_realloc(data, capacity * T size)
-            if (!tmpData) {
-                Exception new(This, "Failed to allocate %zu bytes of memory for array to grow! Exiting..\n" format(capacity * T size)) throw()
+	_ensureCapacity: func (newSize: Int) {
+		if(newSize > _capacity) {
+			_capacity = newSize * (newSize > 50000 ? 2 : 4)
+            tmp_data := gc_realloc(_data, _capacity * T size)
+            if (!tmp_data) {
+                Exception new(This, "Failed to allocate %zu bytes of memory for array to grow! Exiting..\n" format(_capacity * T size)) throw()
             } else {
-                data = tmpData
+                _data = tmp_data
             }
 		}
 	}
 
-	/** private */
-	_checkIndex: inline func (index: Int) {
-		if (index < 0) {
+	/**
+     * Check that an index is within the bounds of
+     */
+	_checkIndex: func (index: Int) {
+		if (index < 0)
             Exception new(This, "Index too small! %d < 0" format(index)) throw()
-        }
-		if (index >= size) {
+		if (index >= size)
             Exception new(This, "Index too big! %d >= %d" format(index, size)) throw()
-        }
 	}
 
 }
