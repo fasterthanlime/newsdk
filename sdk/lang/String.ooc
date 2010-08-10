@@ -1,9 +1,13 @@
 
-
 /**
  * A byte. Not a char - die, C, die.
  */
 Byte: cover from char
+
+/**
+ * An UTF-32 character
+ */
+Char: cover from uint32_t
 
 /**
  * A string
@@ -14,15 +18,15 @@ String: abstract class {
         get { _getSize() }
     }
 
+    /** the number of bytes in this string */
+    _getSize: abstract func -> SizeT
+
     bytes: Byte* {
         get { _getBytes() }
     }
 
     /** return the contents of this String, as an array of bytes, UTF-8 encoded */
     _getBytes: abstract func -> Byte*
-
-    /** the number of bytes in this string */
-    _getSize: abstract func -> SizeT
 
     /** print *this* followed by a newline. */
     println: abstract func
@@ -94,6 +98,8 @@ ASCIIString: class extends String {
 }
 
 /* ----- C interfacing ----- */
+
+include stdint // for uint32_t
 
 include stdio, string
 
