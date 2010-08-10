@@ -88,7 +88,7 @@ ASCIIString: class extends String {
     /** print *this* followed by a newline. */
     println: func {
         fwrite(_data, 1, _size, stdout)
-        fwrite("\n" bytes, 1, 1, stdout)
+        fwrite("\n", 1, 1, stdout)
     }
 
 }
@@ -98,17 +98,20 @@ ASCIIString: class extends String {
 include stdio, string
 
 /** stdio.h - formatted print into a buffer, with a specified max length. Returns the actual length of the formatting. */
-vsnprintf: extern func (buffer: Pointer, length: Int, fmt: Pointer, args: VaList) -> Int
+vsnprintf: extern func (buffer: Byte*, length: Int, fmt: Byte*, args: VaList) -> Int
 
 /** stdio.h - prints a string of bytes to stdout and a newline after it */
-puts: extern func (str: Pointer)
+puts: extern func (str: Byte*)
 
 /** stdio.h - write a string of bytes to a CFile, nmemb elements of size 'size' */
-fwrite: extern func (str: Pointer, size: SizeT, nmemb: SizeT, file: CFile)
+fwrite: extern func (str: Byte*, size: SizeT, nmemb: SizeT, file: CFile)
 
 /** stdio.h - length of a nul-terminated string */
-strlen: extern func (str: Pointer) -> SizeT
+strlen: extern func (str: Byte*) -> SizeT
 
+operator implicit as (str: String) -> Byte* {
+    str bytes
+}
 
 
 
