@@ -14,18 +14,18 @@ ArrayList: class <T> implements Iterable<T> {
     /**
      * Number of elements contained in that list
      */
-    size : Int { get set }
+    size: Int { get set }
 
     /**
      * Actual array used for storing elements
      */
-	_data : T*
+	_data: T*
 
     /**
      * size of the internal array used for storage
      * ie. number of elements we can add before resizing
      */
-	_capacity : Int
+	_capacity: Int
 
     /**
      * Create a new empty ArrayList

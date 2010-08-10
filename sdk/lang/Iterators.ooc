@@ -1,7 +1,6 @@
 
 /**
- * An iterable is a sequence that can be iterated through with
- * an iterator returned by the iterator()  method
+ * An iterable is a sequence that can be iterated through
  *
  * @author Amos Wenger (nddrylliog)
  */
