@@ -30,6 +30,11 @@ Int: cover from int {
 }
 
 /**
+ * Unsigned int on 8 bits
+ */
+UInt8: cover from uint8_t extends Int
+
+/**
  * A boolean type
  */
 Bool: cover from bool {
@@ -41,7 +46,7 @@ Bool: cover from bool {
 /**
  * SizeT can hold the value of any pointer
  */
-SizeT: cover from size_t
+SizeT: cover from size_t extends Int
 
 /**
  * A range has a lower bound and an upper bound

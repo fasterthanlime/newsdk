@@ -1,0 +1,3 @@
+Name: utf8proc
+Libs: -lutf8proc
+Includes: utf8proc.h
