@@ -1,10 +1,14 @@
 
 
 /**
- * A fixed-length, immutable ASCII string
+ * A fixed-length, immutable UTF-32 string (aka UCS-2)
  *
- * For a String that handles UTF-8 characters properly (e.g.
- * for 'each', 'size', etc.), see UTF8String
+ * Advantages:
+ *   - Fixed-size characters (fast)
+ *   - Can hold any Unicode character (compatible)
+ *
+ * Disadvantage:
+ *   - Every character takes 4 bytes (uses up to 4x more memory)
  *
  * @author Amos Wenger (nddrylliog)
  */
@@ -63,6 +67,10 @@ UTF32String: class extends String {
         this
     }
 
+    fromNull: static func ~implicitLength (data: Pointer) -> This {
+        fromNull(data, strlen(data))
+    }
+
     /** Print this string to stdout */
     print: func {
         // at this point it's the simplest thing to do
@@ -87,6 +95,10 @@ UTF32String: class extends String {
         //buff bytes
 
         null
+    }
+
+    toUTF32: func -> This {
+        this
     }
 
 }

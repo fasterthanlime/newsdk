@@ -2,6 +2,8 @@
 /**
  * A byte, ie. 8 bits.
  * *Not* a char (die, C, die)
+ *
+ * @author Amos Wenger (nddrylliog)
  */
 Byte: cover from char
 
@@ -9,8 +11,14 @@ Byte: cover from char
  * Abstract class for all types of Strings
  *
  * The default string type is UTF8String
+ *
+ * @author Amos Wenger (nddrylliog)
  */
 String: abstract class implements Iterable<Char> {
+
+    toNull: func -> Byte* {
+        toUTF8() bytes
+    }
 
     /** Number of bytes used to store this string */
     numBytes: SizeT {
@@ -50,15 +58,15 @@ String: abstract class implements Iterable<Char> {
 
         // compute length
         numBytes := vsnprintf(null, 0, data, list)
-        output := UTF8String _alloc(numBytes)
+        output := gc_malloc(numBytes + 1)
         va_end(list)
 
         // now do the actual formatting
         va_start(list, this)
-        vsnprintf(output _data, numBytes + 1, data, list)
+        vsnprintf(output, numBytes + 1, data, list)
         va_end(list)
 
-        output
+        UTF8String fromNullZeroCopy(output, numBytes)
     }
 
     /**
@@ -69,6 +77,11 @@ String: abstract class implements Iterable<Char> {
      * Returning an ASCIIString is acceptable, since it's a subset of UTF-8
      */
     toUTF8: abstract func -> UTF8String
+
+    /**
+     * Return a String guaranteed to be of internal encoding UTF-32 (aka UCS-2)
+     */
+    toUTF32: abstract func -> UTF32String
 
 }
 
@@ -91,7 +104,7 @@ fwrite: extern func (str: Byte*, size: SizeT, nmemb: SizeT, file: CFile)
 strlen: extern func (str: Byte*) -> SizeT
 
 operator implicit as (str: String) -> Byte* {
-    str toUTF8() bytes
+    str toNull()
 }
 
 
