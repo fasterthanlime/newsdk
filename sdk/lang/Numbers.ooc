@@ -35,6 +35,16 @@ Int: cover from int {
 UInt8: cover from uint8_t extends Int
 
 /**
+ * Unsigned int on 16 bits
+ */
+UInt16: cover from uint16_t extends Int
+
+/**
+ * Unsigned int on 32 bits
+ */
+UInt32: cover from uint32_t extends Int
+
+/**
  * A boolean type
  */
 Bool: cover from bool {

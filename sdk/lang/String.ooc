@@ -1,26 +1,9 @@
 
 /**
- * A byte. Not a char - die, C, die.
+ * A byte, ie. 8 bits.
+ * *Not* a char (die, C, die)
  */
 Byte: cover from char
-
-/**
- * An UTF-32 character
- */
-Char: cover from int32_t {
-
-    print: func {
-        dst := gc_malloc(4) // 4 bytes long
-        length := utf8proc_encode_char(this, dst)
-        fwrite(dst, 1, length, stdout)
-    }
-
-    println: func {
-        print()
-        fwrite("\n", 1, 1, stdout)
-    }
-
-}
 
 /**
  * Abstract class for all types of Strings
@@ -29,19 +12,25 @@ Char: cover from int32_t {
  */
 String: abstract class implements Iterable<Char> {
 
-    size: SizeT {
-        get { _getSize() }
+    /** Number of bytes used to store this string */
+    numBytes: SizeT {
+        get { _getNumBytes() }
     }
+    _getNumBytes: abstract func -> SizeT
 
-    /** the number of bytes in this string */
-    _getSize: abstract func -> SizeT
-
-    bytes: Byte* {
-        get { _getBytes() }
+    /**
+     * Number of characters in this string
+     *
+     * 'character' is a tricky notion in Unicode. We assume that a 'grapheme cluster'
+     * as defined in utf8proc, the UTF-8 library used in this sdk, corresponds to
+     * one character.
+     *
+     * For more details, please refer to the utf8proc documentation or its sourcecode.
+     */
+    numChars: SizeT {
+        get { _getNumChars() }
     }
-
-    /** return the contents of this String, as an array of bytes, UTF-8 encoded */
-    _getBytes: abstract func -> Byte*
+    _getNumChars: abstract func -> SizeT
 
     /** print *this* followed by a newline. */
     println: func {
@@ -52,173 +41,36 @@ String: abstract class implements Iterable<Char> {
     /** print *this* followed by a newline. */
     print: abstract func
 
-    /** allocate a String of length */
-    alloc: abstract static func (length: SizeT) -> This
-
     /** return a string formatted using *this* as template. */
     format: final func (...) -> This {
         list: VaList
 
         va_start(list, this)
-        data := bytes
+        data := toUTF8() bytes
 
         // compute length
-        length := vsnprintf(null, 0, data, list)
-        output := ASCIIString alloc(length)
+        numBytes := vsnprintf(null, 0, data, list)
+        output := UTF8String _alloc(numBytes)
         va_end(list)
 
         // now do the actual formatting
         va_start(list, this)
-        vsnprintf(output _data, length + 1, data, list)
+        vsnprintf(output _data, numBytes + 1, data, list)
         va_end(list)
 
         output
     }
 
-}
-
-/**
- * A fixed-length, immutable ASCII string
- *
- * For a String that handles UTF-8 characters properly (e.g.
- * for 'each', 'size', etc.), see UTF8String
- */
-ASCIIString: class extends String {
-
-    _data: Byte*
-    _size: SizeT
-
-    _getBytes: func -> Byte* {
-        _data
-    }
-
-    _getSize: func -> SizeT {
-        _size
-    }
-
     /**
-     * Allocates a String
-     * @param _size The number of bytes of the string
+     * Return a String guaranteed to be of internal encoding UTF-8.
+     * This is useful if you often use 'bytes' and can't afford multiple
+     * conversion from UTF-32 (aka UCS-2), for example.
+     *
+     * Returning an ASCIIString is acceptable, since it's a subset of UTF-8
      */
-    alloc: static func (._size) -> This {
-        this := new()
-        this _data = gc_malloc(_size)
-        this _size = _size
-        this
-    }
-
-    /**
-     * Creates a new ASCIIString from a null-terminated ASCII string.
-     */
-    fromNull: static func (data: Pointer, length: Int) -> This {
-        this := alloc(length)
-        memcpy(this _data, data, length)
-        this
-    }
-
-    /**
-     * Print this
-     */
-    print: func {
-        fwrite(_data, 1, _size, stdout)
-    }
-
-    /** Iterate through this string */
-    each: func (f: Func (Char)) {
-        size times(|i|
-            f(_data[i] as Char)
-        )
-    }
+    toUTF8: abstract func -> UTF8String
 
 }
-
-/**
- * An fixed-length, immutable UTF-8
- */
-UTF8String: class extends String {
-
-    _data: Byte*
-    _size: SizeT
-
-    _getBytes: func -> Byte* {
-        _data
-    }
-
-    _getSize: func -> SizeT {
-        _size
-    }
-
-    /**
-     * Allocates a String
-     * @param _size The number of bytes in the string
-     */
-    alloc: static func (._size) -> This {
-        this := new()
-        this _data = gc_malloc(_size)
-        this _size = _size
-        this
-    }
-
-    /**
-     * Creates a new UTF8String from a null-terminated UTF-8 string.
-     */
-    fromNull: static func (data: Pointer, length: Int) -> This {
-        this := alloc(length)
-        memcpy(this _data, data, length)
-        this
-    }
-
-    /** print *this* followed by a newline. */
-    print: func {
-        fwrite(_data, 1, _size, stdout)
-    }
-
-    /** Iterate through this string */
-    each: func (f: Func (Char)) {
-        pointer := _data as UInt8*
-        bytesRemaining := _size
-
-        codepoint: Char
-        while (bytesRemaining) {
-            bytesRead := utf8proc_iterate(pointer, bytesRemaining, codepoint&)
-            f(codepoint)
-            bytesRemaining -= bytesRead // countdown bytesRemaining to 0
-            pointer        += bytesRead // advance pointer by the number of read bytes
-        }
-    }
-
-}
-
-
-/* ----- UTF-8 handling ----- */
-
-use utf8proc
-
-/**
- *  utf8proc.h -
- *
- *  Reads a single char from the UTF-8 sequence being pointed to by 'str'.
- *  The maximum number of bytes read is 'strlen', unless 'strlen' is
- *  negative.
- *  If a valid unicode char could be read, it is stored in the variable
- *  being pointed to by 'dst', otherwise that variable will be set to -1.
- *  In case of success the number of bytes read is returned, otherwise a
- *  negative error code is returned.
- */
-utf8proc_iterate: extern func (str: UInt8*, strlen: SizeT, dst: Char*) -> SizeT
-
-/**
- *  utf8proc.h -
- *
- *  Encodes the unicode char with the code point 'uc' as an UTF-8 string in
- *  the byte array being pointed to by 'dst'. This array has to be at least
- *  4 bytes long.
- *  In case of success the number of bytes written is returned,
- *  otherwise 0.
- *  This function does not check if 'uc' is a valid unicode code point.
- */
-utf8proc_encode_char: extern func (uc: Char, dst: UInt8*) -> SizeT
-
 
 /* ----- C interfacing ----- */
 
@@ -239,7 +91,7 @@ fwrite: extern func (str: Byte*, size: SizeT, nmemb: SizeT, file: CFile)
 strlen: extern func (str: Byte*) -> SizeT
 
 operator implicit as (str: String) -> Byte* {
-    str bytes
+    str toUTF8() bytes
 }
 
 
